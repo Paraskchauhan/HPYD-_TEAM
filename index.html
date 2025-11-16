@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Hackathon Site</title>
+</head>
+<body>
+  <h1>Welcome to My Hackathon Project</h1>
+  <p id="result">Model output will appear here.</p>
+
+  <button id="call">Send test input to AI</button>
+
+  <script>
+    document.getElementById('call').onclick = async () => {
+      const input = { text: "Hello, test" }; 
+      try {
+        const res = await fetch('https://YOUR_API_DOMAIN/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(input)
+        });
+        const data = await res.json();
+        document.getElementById('result').innerText = JSON.stringify(data);
+      } catch (e) {
+        document.getElementById('result').innerText = 'Error: ' + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
