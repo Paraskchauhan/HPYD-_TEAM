@@ -6,8 +6,21 @@
   <title>AI POWERED SMART SURVEILLANCE AND ALERT SYSTEM</title>
 
   <style>
-    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; position:relative; }
     h1 { font-size: 26px; text-align:center; font-weight:bold; }
+
+    #teamBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
 
     button { padding: 10px 14px; font-size: 16px; margin-top: 10px; cursor:pointer; }
 
@@ -28,6 +41,9 @@
 </head>
 
 <body>
+
+  <!-- TOP RIGHT BUTTON -->
+  <button id="teamBtn" onclick="window.open('team.html', '_blank')">HYPD TEAM</button>
 
   <h1>AI POWERED SMART SURVEILLANCE AND ALERT SYSTEM</h1>
 
@@ -58,7 +74,6 @@
     let stream = null;
     let intervalID = null;
 
-    
     async function sendFrame() {
       try {
         const canvas = document.createElement("canvas");
@@ -71,7 +86,7 @@
         const res = await fetch(PREDICT_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: imgBase64 })  
+          body: JSON.stringify({ image: imgBase64 })
         });
 
         const json = await res.json();
@@ -84,7 +99,6 @@
       }
     }
 
-
     openCamBtn.onclick = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -95,7 +109,6 @@
         openCamBtn.disabled = true;
         closeCamBtn.disabled = false;
 
-      
         intervalID = setInterval(sendFrame, 1000);
 
       } catch (err) {
@@ -103,7 +116,6 @@
       }
     };
 
-  
     closeCamBtn.onclick = () => {
       if (stream) stream.getTracks().forEach(track => track.stop());
 
