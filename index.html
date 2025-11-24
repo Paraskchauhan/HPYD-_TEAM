@@ -6,20 +6,43 @@
   <title>AI POWERED SMART SURVEILLANCE AND ALERT SYSTEM</title>
 
   <style>
-    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; position:relative; }
-    h1 { font-size: 26px; text-align:center; font-weight:bold; }
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 720px; 
+      margin: 40px auto; 
+      padding: 0 16px; 
+      position:relative; 
+    }
 
+    h1 { 
+      font-size: 26px; 
+      text-align:center; 
+      font-weight:bold; 
+    }
+
+    
     #teamBtn {
       position: absolute;
       top: 10px;
       right: 10px;
-      padding: 8px 16px;
-      background: #007bff;
-      color: white;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 13px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(135deg, #ff0080, #ff8c00, #ffeb3b, #05ff85, #00e5ff, #7a00ff);
+      background-size: 300% 300%;
+      animation: colorRotate 4s linear infinite;
+      box-shadow: 0px 0px 12px rgba(0,0,0,0.4);
+    }
+
+    @keyframes colorRotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     button { padding: 10px 14px; font-size: 16px; margin-top: 10px; cursor:pointer; }
@@ -42,8 +65,8 @@
 
 <body>
 
-  <!-- TOP RIGHT BUTTON -->
-  <button id="teamBtn" onclick="window.open('team.html', '_blank')">HYPD TEAM</button>
+  <!-- TOP RIGHT ROUND COLORFUL TEAM BUTTON -->
+  <button id="teamBtn" onclick="window.open('team.html', '_blank')">HYPD<br>TEAM</button>
 
   <h1>AI POWERED SMART SURVEILLANCE AND ALERT SYSTEM</h1>
 
@@ -103,7 +126,6 @@
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         webcamVideo.srcObject = stream;
-
         cameraBox.style.display = "block";
 
         openCamBtn.disabled = true;
