@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Hackathon Site</title>
+  <title>AI POWERED SMART SURVELLIANCE AND ALERT SYSTEM</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
     h1 { font-size: 24px; }
@@ -13,7 +13,7 @@
   </style>
 </head>
 <body>
-  <h1>My Hackathon AI Demo</h1>
+  <h1>AI MODEL</h1>
 
   <!-- Input you can change or remove -->
   <label for="textIn">Enter text for model:</label><br/>
@@ -30,8 +30,8 @@
 
   <!-- ====== SCRIPT: API CALL (replace YOUR-RENDER-URL is already done) ====== -->
   <script>
-    // ← Use your provided Render URL
-    const API_BASE = "https://ai-backend-nsqe.onrender.com"; // <- your Render URL
+    
+    const API_BASE = "https://ai-backend-nsqe.onrender.com"; 
     const PREDICT_ENDPOINT = API_BASE + "/predict";
 
     const runBtn = document.getElementById("runBtn");
@@ -54,22 +54,19 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json"
-            // If you use API key header, add: "x-api-key": "YOUR_KEY"
+            
           },
           body: JSON.stringify(payload)
         });
 
-        // If server returns non-2xx
+      
         if (!res.ok) {
           const txt = await res.text();
           throw new Error("HTTP " + res.status + " — " + txt);
         }
 
         const json = await res.json();
-        // Try to handle common response shapes:
-        // 1) { result: "..." }
-        // 2) { prediction: ... }
-        // 3) any JSON -> show it
+      
         let display;
         if (json.result !== undefined) display = json.result;
         else if (json.prediction !== undefined) display = JSON.stringify(json.prediction);
