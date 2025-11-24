@@ -7,32 +7,32 @@
 
   <style>
     body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
-    h1 { font-size: 24px; }
-    input, button { padding: 8px 10px; font-size: 16px; margin-top: 6px; }
+    h1 { font-size: 26px; text-align:center; font-weight:bold; }
 
-    #output { margin-top: 16px; background:#f7f7f7; padding:12px; border-radius:6px; min-height:24px; }
-    #status { margin-top:8px; font-size:14px; color:#666; }
+    button { padding: 10px 14px; font-size: 16px; margin-top: 10px; cursor:pointer; }
 
     #cameraBox { margin-top:20px; display:none; }
     video { width:100%; max-height:350px; border-radius:8px; background:#000; }
+
+    #output {
+      margin-top: 16px;
+      background:#f7f7f7;
+      padding:12px;
+      border-radius:6px;
+      min-height:24px;
+      font-size:20px;
+      text-align:center;
+      font-weight:bold;
+    }
   </style>
 </head>
 
 <body>
-  <h1>AI MODEL</h1>
 
-  <!-- Input -->
-  <label for="textIn">Enter text for model:</label><br/>
-  <input id="textIn" type="text" placeholder="Type something..." value="Hello from frontend" style="width:100%;" />
-
-  <!-- Run AI Button -->
-  <div style="margin-top:12px;">
-    <button id="runBtn">Run AI Model</button>
-    <span id="status"></span>
-  </div>
+  <h1>AI POWERED SMART SURVEILLANCE AND ALERT SYSTEM</h1>
 
   <!-- Webcam Buttons -->
-  <div style="margin-top:20px;">
+  <div style="text-align:center; margin-top:20px;">
     <button id="openCamBtn">Open Webcam</button>
     <button id="closeCamBtn" disabled>Close Webcam</button>
   </div>
@@ -42,86 +42,82 @@
     <video id="webcam" autoplay playsinline></video>
   </div>
 
-  <!-- Output -->
-  <div id="output">Model output will appear here.</div>
+  <!-- AI Result -->
+  <div id="output">Camera output will appear here.</div>
 
   <script>
     const API_BASE = "https://ai-backend-nsqe.onrender.com";
     const PREDICT_ENDPOINT = API_BASE + "/predict";
 
-    const runBtn = document.getElementById("runBtn");
-    const output = document.getElementById("output");
-    const status = document.getElementById("status");
-    const textIn = document.getElementById("textIn");
-
-    
-    runBtn.onclick = async function () {
-      status.innerText = "";
-      output.innerText = "";
-      runBtn.disabled = true;
-      runBtn.innerText = "Running...";
-      status.innerText = "Calling API...";
-
-      const payload = { data: textIn.value || "Hello" };
-
-      try {
-        const res = await fetch(PREDICT_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
-        const json = await res.json();
-        output.innerText = json.result || JSON.stringify(json);
-        status.innerText = "Success";
-
-      } catch (err) {
-        output.innerText = "Error: " + err.message;
-        status.innerText = "Failed";
-      } finally {
-        runBtn.disabled = false;
-        runBtn.innerText = "Run AI Model";
-      }
-    };
-
-    
     const openCamBtn = document.getElementById("openCamBtn");
     const closeCamBtn = document.getElementById("closeCamBtn");
     const webcamVideo = document.getElementById("webcam");
     const cameraBox = document.getElementById("cameraBox");
+    const output = document.getElementById("output");
 
     let stream = null;
+    let intervalID = null;
 
     
+    async function sendFrame() {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = webcamVideo.videoWidth;
+        canvas.height = webcamVideo.videoHeight;
+        canvas.getContext("2d").drawImage(webcamVideo, 0, 0);
+
+        const imgBase64 = canvas.toDataURL("image/jpeg");
+
+        const res = await fetch(PREDICT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imgBase64 })  
+        });
+
+        const json = await res.json();
+        const prediction = json.result || json.label || "Unknown";
+
+        output.innerText = prediction.toUpperCase();
+
+      } catch (err) {
+        output.innerText = "Error detecting";
+      }
+    }
+
+
     openCamBtn.onclick = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
         webcamVideo.srcObject = stream;
+
         cameraBox.style.display = "block";
 
         openCamBtn.disabled = true;
         closeCamBtn.disabled = false;
 
+      
+        intervalID = setInterval(sendFrame, 1000);
+
       } catch (err) {
-        alert("Camera permission denied or not available!");
+        alert("Camera permission denied!");
       }
     };
 
-    
+  
     closeCamBtn.onclick = () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      if (stream) stream.getTracks().forEach(track => track.stop());
 
       webcamVideo.srcObject = null;
       cameraBox.style.display = "none";
 
       openCamBtn.disabled = false;
       closeCamBtn.disabled = true;
+
+      output.innerText = "Camera closed.";
+
+      clearInterval(intervalID);
     };
   </script>
+
 </body>
 </html>
