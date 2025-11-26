@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Powered Smart Surveillance</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f2f4f8;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      background: #002b6b;
+      padding: 18px 0;
+      text-align: center;
+      color: white;
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 960px;
+      margin: 26px auto;
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0px 6px 18px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      margin-top: 8px;
+    }
+
+    /* Webcam area (relative to place overlay inside) */
+    .webcam-box {
+      width: 100%;
+      height: 380px;
+      border: 3px solid #000;
+      border-radius: 10px;
+      background: #e9eef3;
+      overflow: hidden;
+      position: relative; /* important for overlay */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #webcamFeed, #uploadedOverlayImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    /* Overlay card with upload + predict controls */
+    .overlay-controls {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.94);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+      min-width: 360px;
+      max-width: calc(100% - 40px);
+    }
+
+    .overlay-controls small {
+      color: #555;
+      font-size: 13px;
+    }
+
+    input[type="file"] {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    .overlay-btn {
+      padding: 10px 16px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-start { background: #28a745; color: white; }
+    .btn-stop  { background: #dc3545;  color: white; }
+
+    /* a small floating close button shown when image displayed */
+    .floating-close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 30;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: 36px;
+      margin-top: 14px;
+    }
+
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Small responsive tweak */
+    @media (max-width: 520px) {
+      .overlay-controls { flex-direction: column; padding: 12px; gap: 8px; }
+      .overlay-controls input { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">AI POWERED SMART SURVEILLANCE SYSTEM</div>
+
+  <div class="container">
+    <div class="section-title">Live Webcam</div>
+
+    <div class="webcam-box" id="webcamBox">
+      <!-- Backend MJPEG or similar stream -->
+      <img id="webcamFeed" alt="webcam stream">
+
+      <!-- When user predicts an uploaded image, show it here (covers webcam) -->
+      <img id="uploadedOverlayImage" alt="uploaded prediction result">
+
+      <!-- Overlayed upload/predict controls (inside webcam area) -->
+      <div class="overlay-controls" id="overlayControls">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="predictBtn" class="overlay-btn btn-start">Predict</button>
+        <small id="overlayNote">Upload an image to run prediction</small>
+      </div>
+
+      <!-- Close button to remove displayed image and show overlay again -->
+      <button class="floating-close" id="closeOverlayBtn">Close</button>
+    </div>
+
+    <div class="btn-row">
+      <button id="startWebcamBtn" class="btn-start">START</button>
+      <button id="stopWebcamBtn" class="btn-stop" disabled>STOP</button>
+    </div>
+  </div>
+
+  <audio id="beepSound"><source src="/static/beep.mp3" type="audio/mpeg"></audio>
+
+  <script>
+    const webcamFeed = document.getElementById("webcamFeed");
+    const uploadedOverlayImage = document.getElementById("uploadedOverlayImage");
+    const overlayControls = document.getElementById("overlayControls");
+    const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+
+    const startBtn = document.getElementById("startWebcamBtn");
+    const stopBtn = document.getElementById("stopWebcamBtn");
+    const beepSound = document.getElementById("beepSound");
+
+    const fileInput = document.getElementById("fileInput");
+    const predictBtn = document.getElementById("predictBtn");
+
+    let checkFireInterval;
+
+    // Helper: hide overlay controls
+    function hideOverlayControls() {
+      overlayControls.style.display = "none";
+    }
+    function showOverlayControls() {
+      overlayControls.style.display = "flex";
+    }
+
+    // Show webcam stream function
+    function startWebcamStream() {
+      // Remove uploaded image if present
+      uploadedOverlayImage.style.display = "none";
+      uploadedOverlayImage.src = "";
+
+      // Show webcam
+      webcamFeed.src = "/webcam";
+      webcamFeed.style.display = "block";
+
+      // hide overlay upload controls while webcam is running
+      hideOverlayControls();
+      closeOverlayBtn.style.display = "none";
+    }
+
+    // Stop webcam stream
+    function stopWebcamStream() {
+      webcamFeed.src = "";
+      webcamFeed.style.display = "none";
+
+      // show overlay so user can upload
+      showOverlayControls();
+    }
+
+    // Bind start/stop buttons
+    startBtn.addEventListener("click", () => {
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      startWebcamStream();
+
+      // preserve original "last-prediction" interval behavior
+      checkFireInterval = setInterval(() => {
+        fetch("/last-prediction")
+          .then(res => res.json())
+          .then(data => {
+            if (data.label && data.label.toLowerCase().includes("fire")) {
+              beepSound.play();
+            }
+          })
+          .catch(err => console.warn("last-prediction error", err));
+      }, 1000);
+    });
+
+    stopBtn.addEventListener("click", () => {
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+
+      stopWebcamStream();
+      clearInterval(checkFireInterval);
+    });
+
+    // Clicking predict uploads the file to /predict-image and shows returned image inside webcam box
+    async function predictImage() {
+      if (!fileInput.files || !fileInput.files.length) {
+        alert("Select an image first!");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        predictBtn.disabled = true;
+        predictBtn.textContent = "Predicting...";
+
+        const res = await fetch("/predict-image", { method: "POST", body: formData });
+        if (!res.ok) {
+          const txt = await res.text();
+          console.error("Server error:", res.status, txt);
+          alert("Prediction failed (server). See console.");
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        // show the returned image overlay inside webcam area
+        uploadedOverlayImage.src = url;
+        uploadedOverlayImage.style.display = "block";
+
+        // hide webcam feed (if any)
+        webcamFeed.style.display = "none";
+        webcamFeed.src = "";
+
+        // hide overlay controls but show close button
+        hideOverlayControls();
+        closeOverlayBtn.style.display = "block";
+      } catch (err) {
+        console.error("Predict error:", err);
+        alert("Prediction failed. See console.");
+      } finally {
+        predictBtn.disabled = false;
+        predictBtn.textContent = "Predict";
+      }
+    }
+
+    predictBtn.addEventListener("click", predictImage);
+
+    // Close overlay image and show overlay controls again
+    closeOverlayBtn.addEventListener("click", () => {
+      uploadedOverlayImage.style.display = "none";
+      uploadedOverlayImage.src = "";
+      closeOverlayBtn.style.display = "none";
+      showOverlayControls();
+    });
+
+    // If user starts webcam at any time, ensure any uploaded image is removed
+    startBtn.addEventListener("click", () => {
+      // ensure any displayed image is removed instantly
+      uploadedOverlayImage.style.display = "none";
+      uploadedOverlayImage.src = "";
+      closeOverlayBtn.style.display = "none";
+    });
+
+    // Initially show overlay controls (no webcam started)
+    showOverlayControls();
+  </script>
+</body>
+</html>
